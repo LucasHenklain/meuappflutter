@@ -1,0 +1,122 @@
+dependencies:
+  flutter:
+    sdk: flutter
+  hive: ^2.0.4
+  hive_flutter: ^1.1.0
+  path_provider: ^2.0.2
+  provider: ^7.0.0
+
+import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+void main() async {
+  await Hive.initFlutter();
+  Hive.registerAdapter(IMCAdapter());
+  await Hive.openBox<IMC>('imcBox');
+
+  runApp(IMCCalculatorApp());
+}
+
+class IMCCalculatorApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: IMCCalculator(),
+    );
+  }
+}
+
+@HiveType(typeId: 0)
+class IMC {
+  @HiveField(0)
+  double peso;
+
+  IMC(this.peso, this.altura);
+
+  double get altura => double.tryParse(Hive.box('settings').get('altura', defaultValue: '1.0') as String) ?? 1.0;
+
+  double calcularIMC() {
+    return peso / (altura * altura);
+  }
+}
+
+class IMCAdapter extends TypeAdapter<IMC> {
+  @override
+  final int typeId = 0;
+
+  @override
+  IMC read(BinaryReader reader) {
+    return IMC(reader.readDouble(), 0);
+  }
+
+  @override
+  void write(BinaryWriter writer, IMC obj) {
+    writer.writeDouble(obj.peso);
+  }
+}
+
+class IMCCalculator extends StatefulWidget {
+  @override
+  _IMCCalculatorState createState() => _IMCCalculatorState();
+}
+
+class _IMCCalculatorState extends State<IMCCalculator> {
+  List<IMC> imcList = Hive.box<IMC>('imcBox').values.toList();
+  TextEditingController pesoController = TextEditingController();
+
+  void calcularIMC() {
+    double peso = double.tryParse(pesoController.text);
+
+    if (peso != null) {
+      IMC imc = IMC(peso, 0);
+      Hive.box<IMC>('imcBox').add(imc);
+      setState(() {
+        pesoController.clear();
+        imcList = Hive.box<IMC>('imcBox').values.toList();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Calculadora de IMC'),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: TextField(
+              controller: pesoController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: 'Peso (kg)'),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: calcularIMC,
+            child: Text('Calcular IMC'),
+          ),
+          Expanded(
+            child: ValueListenableBuilder(
+              valueListenable: Hive.box<IMC>('imcBox').listenable(),
+              builder: (context, Box<IMC> box, child) {
+                imcList = box.values.toList();
+                return ListView.builder(
+                  itemCount: imcList.length,
+                  itemBuilder: (context, index) {
+                    return ListTile(
+                      title: Text('IMC: ${imcList[index].calcularIMC().toStringAsFixed(2)}'),
+                      subtitle: Text('Peso: ${imcList[index].peso} kg, Altura: ${imcList[index].altura} m'),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
