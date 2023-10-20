@@ -1,0 +1,101 @@
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:back4app_parse/back4app_parse.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: HomeScreen(),
+    );
+  }
+}
+
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<Pessoa> pessoas = [];
+  final imagePicker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarPessoas();
+  }
+
+  Future<void> _carregarPessoas() async {
+    final queryBuilder = QueryBuilder<Pessoa>(ParseObject('Pessoa'));
+    final response = await queryBuilder.query();
+
+    if (response.success && response.results != null) {
+      setState(() {
+        pessoas = response.results;
+      });
+    }
+  }
+
+  Future<void> _adicionarPessoa() async {
+    final pickedFile = await imagePicker.getImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final file = ParseFile(File(pickedFile.path));
+      await file.save();
+
+      final pessoa = Pessoa()..imagem = file.url;
+      final response = await pessoa.save();
+
+      if (response.success) {
+        _carregarPessoas();
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Cadastro de Pessoas'),
+      ),
+      body: Column(
+        children: <Widget>[
+          ElevatedButton(
+            onPressed: _adicionarPessoa,
+            child: Text('Adicionar Pessoa'),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: pessoas.length,
+              itemBuilder: (context, index) {
+                final pessoa = pessoas[index];
+                return ListTile(
+                  leading: CachedNetworkImage(
+                    imageUrl: pessoa.imagem,
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                  ),
+                  title: Text(pessoa.objectId ?? ''),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class Pessoa extends ParseObject {
+  Pessoa() : super('Pessoa');
+
+  String get imagem => get<String>('imagem');
+
+  set imagem(String value) => set<String>('imagem', value);
+}
