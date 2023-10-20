@@ -1,0 +1,94 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(IMCCalculatorApp());
+}
+
+class IMCCalculatorApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: IMCCalculator(),
+    );
+  }
+}
+
+class IMCCalculator extends StatefulWidget {
+  @override
+  _IMCCalculatorState createState() => _IMCCalculatorState();
+}
+
+class IMC {
+  double peso;
+  double altura;
+
+  IMC(this.peso, this.altura);
+
+  double calcularIMC() {
+    return peso / (altura * altura);
+  }
+}
+
+class _IMCCalculatorState extends State<IMCCalculator> {
+  List<IMC> imcList = [];
+  TextEditingController pesoController = TextEditingController();
+  TextEditingController alturaController = TextEditingController();
+
+  void calcularIMC() {
+    double peso = double.tryParse(pesoController.text);
+    double altura = double.tryParse(alturaController.text);
+
+    if (peso != null && altura != null) {
+      IMC imc = IMC(peso, altura);
+      imcList.add(imc);
+      setState(() {
+        pesoController.clear();
+        alturaController.clear();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Calculadora de IMC'),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: TextField(
+              controller: pesoController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: 'Peso (kg)'),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.all(16.0),
+            child: TextField(
+              controller: alturaController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(labelText: 'Altura (m)'),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: calcularIMC,
+            child: Text('Calcular IMC'),
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: imcList.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  title: Text('IMC: ${imcList[index].calcularIMC().toStringAsFixed(2)}'),
+                  subtitle: Text('Peso: ${imcList[index].peso} kg, Altura: ${imcList[index].altura} m'),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
