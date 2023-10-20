@@ -1,0 +1,80 @@
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: HomeScreen(),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Consulta de CEP'),
+      ),
+      body: CEPList(),
+    );
+  }
+}
+
+class CEPList extends StatefulWidget {
+  @override
+  _CEPListState createState() => _CEPListState();
+}
+
+class _CEPListState extends State<CEPList> {
+  List<String> ceps = [];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: () {
+            _consultarCEP();
+          },
+          child: Text('Consultar CEP'),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: ceps.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(ceps[index]),
+                onTap: () {
+                  // Implementar ação de alteração ou exclusão do CEP aqui.
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  _consultarCEP() async {
+    // Substitua com o código de consulta ao ViaCep
+    String cep = '12345678'; // Exemplo de CEP
+
+    if (!ceps.contains(cep)) {
+      setState(() {
+        ceps.add(cep);
+      });
+
+      // Substitua com o código de cadastro no Back4App
+      _cadastrarCEPNoBack4App(cep);
+    }
+  }
+
+  _cadastrarCEPNoBack4App(String cep) {
+    // Substitua com a lógica de cadastro no Back4App.
+  }
+}
